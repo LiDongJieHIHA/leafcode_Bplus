@@ -3,7 +3,8 @@ from bisect import bisect_right, bisect_left
 from collections import deque
 from item import KeyValue
 
-
+left=0
+right=10**100
 class InitError(Exception):
     pass
 
@@ -48,7 +49,8 @@ class Bptree(object):
                 self.__L = L
                 self.vlist = []
                 self.codelist=[]
-                self.bro = None  # 兄弟结点
+                self.leftbro = None  # 兄弟结点
+                self.rightbro=None
                 self.par = None  # 父结点
 
         def isleaf(self):
@@ -63,6 +65,24 @@ class Bptree(object):
         @property
         def L(self):
             return self.__L
+
+        def setcode(self,pos):
+            lefta =0
+            rightb=right
+            assert pos>=0
+            assert pos<=len(self.codelist)
+            if pos ==0 and self.leftbro != None:
+                lefta=self.leftbro.codelist[len(self.leftbro.codelist)-1]
+            elif pos>0:
+                lefta=self.codelist[pos-1]
+            if pos >=len(self.codelist) and self.rightbro != None:
+                rightb=self.rightbro.codelist[0]
+            elif pos<len(self.codelist):
+                rightb=self.codelist[pos]
+            self.codelist.insert(pos,(lefta+rightb)//2)
+            if rightb-lefta<=1:
+                return -1
+            return (lefta+rightb)//2
 
     def __init__(self, M, L):
         if L > M:
@@ -110,6 +130,7 @@ class Bptree(object):
             mid = (self.L + 1) // 2
             newleaf = Bptree.__Leaf(self.L)
             newleaf.vlist = n2.vlist[mid:]
+            newleaf.codelist=n2.codelist[mid:]
             if n2.par == None:
                 newroot = Bptree.__InterNode(self.M)
                 newroot.ilist = [n2.vlist[mid].key]
@@ -122,24 +143,28 @@ class Bptree(object):
                 n2.par.clist.insert(i + 1, newleaf)
                 newleaf.par = n2.par
             n2.vlist = n2.vlist[:mid]
-            n2.bro = newleaf
+            n2.rightbro = newleaf
+            newleaf.leftbro =n2
+
 
         #这里是插入
         def insert_node(n):
             if not n.isleaf():
                 if n.isfull():
-                    insert_node(split_node(n))
+                    return insert_node(split_node(n))
                 else:
                     p = bisect_right(n.ilist, key_value)
-                    insert_node(n.clist[p])
+                    return insert_node(n.clist[p])
             else:
                 p = bisect_right(n.vlist, key_value)
                 n.vlist.insert(p, key_value)
+                code=n.setcode(p)
                 if n.isfull():
                     split_leaf(n)
+                    return code
                 else:
-                    return
-        insert_node(node)
+                    return code
+        return insert_node(node)
 
     # 搜索
 
@@ -187,13 +212,13 @@ class Bptree(object):
 
                         return result
 
-                if leaf.bro == None:
+                if leaf.rightbro == None:
 
                     return result
 
                 else:
 
-                    leaf = leaf.bro
+                    leaf = leaf.rightbro
 
         elif ma is None:
 
@@ -203,13 +228,13 @@ class Bptree(object):
 
             while True:
 
-                if leaf.bro == None:
+                if leaf.rightbro == None:
 
                     return result
 
                 else:
 
-                    leaf = leaf.bro
+                    leaf = leaf.rightbro
 
                     result.extend(leaf.vlist)
 
@@ -261,17 +286,17 @@ class Bptree(object):
 
                     while True:
 
-                        if l.bro == l2:
+                        if l.rightbro == l2:
 
                             result.extend(l2.vlist[:i2])
 
                             return result
 
-                        elif l.bro != None:
+                        elif l.rightbro != None:
 
-                            result.extend(l.bro.vlist)
+                            result.extend(l.rightbro.vlist)
 
-                            l = l.bro
+                            l = l.rightbro
 
                         else:
 
@@ -287,13 +312,13 @@ class Bptree(object):
 
             result.extend(l.vlist)
 
-            if l.bro == None:
+            if l.rightbro == None:
 
                 return result
 
             else:
 
-                l = l.bro
+                l = l.rightbro
 
     def show(self):
 
@@ -335,35 +360,20 @@ class Bptree(object):
     def delete(self, key_value):
 
         def merge(n, i):
-
             if n.clist[i].isleaf():
-
                 n.clist[i].vlist = n.clist[i].vlist + n.clist[i + 1].vlist
-
-                n.clist[i].bro = n.clist[i + 1].bro
-
+                n.clist[i].rightbro = n.clist[i + 1].rightbro
             else:
-
                 n.clist[i].ilist = n.clist[i].ilist + [n.ilist[i]] + n.clist[i + 1].ilist
-
                 n.clist[i].clist = n.clist[i].clist + n.clist[i + 1].clist
-
             n.clist.remove(n.clist[i + 1])
-
             n.ilist.remove(n.ilist[i])
-
             if n.ilist == []:
-
                 n.clist[0].par = None
-
                 self.__root = n.clist[0]
-
                 del n
-
                 return self.__root
-
             else:
-
                 return n
 
         def tran_l2r(n, i):
@@ -504,8 +514,8 @@ def test():
     # 插入操作
 
     for x in testlist:
-        mybptree.insert(x)
-
+        code=mybptree.insert(x)
+        print("code:"+str(code))
     mybptree.show()
 
     # 查找操作
