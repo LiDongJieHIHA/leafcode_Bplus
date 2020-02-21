@@ -2,6 +2,7 @@ from random import randint, choice
 from bisect import bisect_right, bisect_left
 from collections import deque
 from item import KeyValue
+import random
 
 left=0
 right=10**100
@@ -490,53 +491,47 @@ class Bptree(object):
 
 
 def test():
-    # 初始化数据源
-
-    mini = 50
-
-    maxi = 200
-
-    testlist = []
-
-    for i in range(20):
-        key = randint(1, 1000)
-
-        # key=i
-
+    testsize=1000000
+    testKey = list(range(testsize))
+    testlist=[]
+    #这个是随机插入
+    codefile=open("极端情况.txt",'w')
+    for i in range(testsize):
+        key=random.choice(testKey)
         value = choice(['Do', 'Re', 'Mi', 'Fa', 'So', 'La', 'Si'])
-
         testlist.append(KeyValue(key, value))
-
+    # # 这个是极端情况
+    # codefile = open("随机插入.txt", 'w')
+    # for key in testKey:
+    #     value = choice(['Do', 'Re', 'Mi', 'Fa', 'So', 'La', 'Si'])
+    #     testlist.append(KeyValue(key, value))
     # 初始化B树
-
     mybptree = Bptree(4, 4)
-
     # 插入操作
-
     for x in testlist:
         code=mybptree.insert(x)
-        print("code:"+str(code))
-    mybptree.show()
-
-    # 查找操作
-
-    print('\nnow we are searching item between %d and %d\n==>' % (mini, maxi))
-
-    print([v.key for v in mybptree.search(mini, maxi)])
-
-    # 删除操作
-
-    mybptree.delete(testlist[0])
-
-    print('\n删除 {0}后， the newtree is:\n'.format(testlist[0]));
-
-    mybptree.show()
-
-    # 深度遍历操作
-
-    print('\nkey of this b+tree is \n')
-
-    print([kv.key for kv in mybptree.traversal()])
+        if code == -1:
+            print("error"+str(testlist.index(x)+1))
+            break
+        codefile.write(str(code)+"\n")
+    # mybptree.show()
+    # # 查找操作
+    #
+    # print('\nnow we are searching item between %d and %d\n==>' % (mini, maxi))
+    #
+    # print([v.key for v in mybptree.search(mini, maxi)])
+    # # 删除操作
+    # mybptree.delete(testlist[0])
+    #
+    # print('\n删除 {0}后， the newtree is:\n'.format(testlist[0]));
+    #
+    # mybptree.show()
+    #
+    # # 深度遍历操作
+    #
+    # print('\nkey of this b+tree is \n')
+    #
+    # print([kv.key for kv in mybptree.traversal()])
 
 
 if __name__ == '__main__':
